@@ -98,6 +98,7 @@ get_rv_prebuilts() {
 				name="patches-${tag_name}.rvp.asc"
 			else
 				name="patches-${tag_name}.json"
+			fi
 			file="${dir}/${name}"
 			if [ ! -f "$file" ]; then
 				resp=$(gh_req "$rv_rel" -) || return 1
