@@ -94,12 +94,15 @@ get_rv_prebuilts() {
 
 		echo -n "$file "
 		if [ "$tag" = "Patches" ]; then
-			name="patches-${tag_name}.json"
+		    if [ "$cli_src" = "j-hc/revanced-cli" ]; then
+				name="patches-${tag_name}.rvp.asc"
+			else
+				name="patches-${tag_name}.json"
 			file="${dir}/${name}"
 			if [ ! -f "$file" ]; then
 				resp=$(gh_req "$rv_rel" -) || return 1
 				if [ "$ver" = "dev" ]; then resp=$(jq -r '.[0]' <<<"$resp"); fi
-				url=$(jq -e -r '.assets[] | select(.name | endswith("json")) | .url' <<<"$resp") || return 1
+				url=$(jq -e -r '.assets[] | select(.name | endswith("json")) | .url' <<<"$resp") || $(jq -e -r '.assets[] | select(.name | endswith("asc")) | .url' <<<"$resp") || return 1
 				gh_dl "$file" "$url" >&2 || return 1
 				echo -e "[Changelog](https://github.com/${src}/releases/tag/${tag_name})\n" >>"${cl_dir}/changelog.md"
 			fi
