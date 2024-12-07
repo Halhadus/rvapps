@@ -1,13 +1,6 @@
 name: Matrix Build Modules
 on:
   workflow_call:
-    secrets:
-      TELEGRAM_TOKEN:
-        description: "Telegram Bot Token"
-        required: true
-      TELEGRAM_TO:
-        description: "Telegram Chat ID"
-        required: true
     inputs:
       from_ci:
         type: boolean
@@ -66,37 +59,37 @@ jobs:
           - id: "Reddit-Extended"
           - id: "YouTube-anddea"
           - id: "Music-anddea"
-          - id: "YouTube"
-          - id: "Music"
           - id: "Twitter"
-          - id: "Twitch"
           - id: "TikTok"
-          - id: "Reddit"
-          - id: "Messenger"
-          - id: "Facebook"
-          - id: 'Spotify'
-          - id: "Spotify-Lite"
-          #   - id: "Citra"
-          #   - id: "Backdrops"
-          #   - id: "WarnWetter"
-          #   - id: "Windyapp"
-          - id: "MyExpenses"
-          - id: "NyxMusicPlayer"
-          - id: "IconPackStudio"
-          - id: "TickTick"
-          - id: "Tasker"
-          - id: "Photomath"
+          # - id: 'Spotify'
+          # - id: "YouTube"
+          # - id: "Music"
+          # - id: "Twitch"
+          # - id: "Reddit"
+          # - id: "Messenger"
+          # - id: "Facebook"
+          # - id: "Spotify-Lite"
+          # - id: "Citra"
+          # - id: "Backdrops"
+          # - id: "WarnWetter"
+          # - id: "Windyapp"
+          # - id: "MyExpenses"
+          # - id: "NyxMusicPlayer"
+          # - id: "IconPackStudio"
+          # - id: "TickTick"
+          # - id: "Tasker"
+          # - id: "Photomath"
           # - id: "Instagram-armeabi-v7a"
-          - id: "Instagram"
-          - id: "InShorts"
-          #   - id: "SyncForReddit"
-          - id: "InfinityForReddit"
-          - id: "VSCO"
-          - id: "Pixiv"
-          #   - id: "Trakt"
-          - id: "MemeGenerator"
-          - id: "Lightroom"
-          - id: "Tumblr"
+          # - id: "Instagram"
+          # - id: "InShorts"
+          # - id: "SyncForReddit"
+          # - id: "InfinityForReddit"
+          # - id: "VSCO"
+          # - id: "Pixiv"
+          # - id: "Trakt"
+          # - id: "MemeGenerator"
+          # - id: "Lightroom"
+          # - id: "Tumblr"
 
     env:
       RELEASE_VERSION: ${{ needs.generate-release.outputs.version }}
@@ -192,66 +185,5 @@ jobs:
           else
             gh release edit ${{ needs.generate-release.outputs.version }} --draft=false --prerelease --repo ${{ github.repository }}
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  telegram-notify:
-    if: ${{ github.ref_name == 'main' }}
-    needs: [generate-release, run, release]
-    name: Notify Release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10' # The python version to use.
-          cache: 'pip'
-          cache-dependency-path: 'telegram-script/requirements.txt'
-        
-      - name: Install dependencies
-        run: pip install -r telegram-script/requirements.txt
-      
-      - name: Run telegram notification script
-        run: python3 telegram-script
-          
-      - name: Telegram Channel Update
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_TO }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: markdown
-          message_file: release_notification.md
-  
-  push-notify:
-    if: ${{ github.ref_name == 'main' }}
-    needs: [generate-release, run, release]
-    name: Push Notification
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11' # The python version to use.
-          cache: 'pip'
-          cache-dependency-path: 'push-notify/requirements.txt'
-
-      - name: Install dependencies
-        run: pip install -r push-notify/requirements.txt
-
-      - name: Create google-auth json
-        run: echo "${{ secrets.GOOGLE_AUTH_JSON }}" | base64 -d > google-services.json
-
-      - name: Run push notification script
-        run: |
-          release_tag="${{ needs.generate-release.outputs.version }}"
-          release_body=$(gh release view $release_tag --json body -q .body)
-          python3 push-notify --title "New Release $release_tag" --body "$release_body" --api_url ${{ secrets.NOTIF_API_URL }} --bearer ${{ secrets.NOTIF_API_BEARER }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

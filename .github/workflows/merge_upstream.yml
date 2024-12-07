@@ -1,7 +1,7 @@
 name: Sync with upstream
 on: 
   schedule:
-    - cron: '30 22 * * *'
+    - cron: '30 2 * * *'
   workflow_dispatch:
 
 jobs:
@@ -12,4 +12,4 @@ jobs:
       - name: Sync Repo
         run: gh repo sync ${{ github.repository }} -b main
         env:
-          GH_TOKEN: ${{ secrets.PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
