@@ -45,7 +45,7 @@ get_rv_prebuilts() {
 	for src_ver in "$cli_src CLI $cli_ver" "$integrations_src Integrations $integrations_ver" "$patches_src Patches $patches_ver"; do
 		set -- $src_ver
 		local src=$1 tag=$2 ver=${3-} ext
-		if [ "$tag" = "Patches" ] && [ "cli_src" = "j-hc/revanced-cli" ]; then
+		if [ "$tag" = "Patches" ] && [ "$cli_src" = "j-hc/revanced-cli" ]; then
 			ext="rvp"
 		elif [ "$tag" = "CLI" ] || [ "$tag" = "Patches" ]; then
 			ext="jar"
