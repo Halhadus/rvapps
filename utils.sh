@@ -45,7 +45,9 @@ get_rv_prebuilts() {
 	for src_ver in "$cli_src CLI $cli_ver" "$integrations_src Integrations $integrations_ver" "$patches_src Patches $patches_ver"; do
 		set -- $src_ver
 		local src=$1 tag=$2 ver=${3-} ext
-		if [ "$tag" = "CLI" ] || [ "$tag" = "Patches" ]; then
+		if [ "$tag" = "Patches" ] && [ "cli_src" = "j-hc/revanced-cli" ]; then
+			ext="rvp"
+		elif [ "$tag" = "CLI" ] || [ "$tag" = "Patches" ]; then
 			ext="jar"
 		elif [ "$tag" = "Integrations" ]; then
 			ext="apk"
@@ -423,7 +425,7 @@ check_sig() {
 	fi
 }
 
-build_rv() {
+build_rv_old_cli() {
 	eval "declare -A args=${1#*=}"
 	local version pkg_name
 	local mode_arg=${args[build_mode]} version_mode=${args[version]}
@@ -532,6 +534,141 @@ build_rv() {
 		else
 			patched_apk="${TEMP_DIR}/${app_name_l}-${rv_brand_f}-${version_f}-${arch_f}.apk"
 		fi
+		if [ "${args[riplib]}" = true ]; then
+			patcher_args+=("--rip-lib x86_64 --rip-lib x86")
+			if [ "$build_mode" = module ]; then
+				patcher_args+=("--rip-lib arm64-v8a --rip-lib armeabi-v7a --unsigned")
+			else
+				if [ "$arch" = "arm64-v8a" ]; then
+					patcher_args+=("--rip-lib armeabi-v7a")
+				elif [ "$arch" = "arm-v7a" ]; then
+					patcher_args+=("--rip-lib arm64-v8a")
+				fi
+			fi
+		fi
+		if [ "${NORB:-}" != true ] || [ ! -f "$patched_apk" ]; then
+			if ! patch_apk "$stock_apk" "$patched_apk" "${patcher_args[*]}" "${args[cli]}" "${args[ptjar]}"; then
+				epr "Building '${table}' failed!"
+				return 0
+			fi
+		fi
+		if [ "$build_mode" = apk ]; then
+			local apk_output="${BUILD_DIR}/${app_name_l}-${rv_brand_f}-v${version_f}-${arch_f}.apk"
+			mv -f "$patched_apk" "$apk_output"
+			pr "Built ${table} (non-root): '${apk_output}'"
+			continue
+		fi
+		local base_template
+		base_template=$(mktemp -d -p "$TEMP_DIR")
+		cp -a $MODULE_TEMPLATE_DIR/. "$base_template"
+		local upj="${table,,}-update.json"
+
+		module_config "$base_template" "$pkg_name" "$version" "$arch"
+		module_prop \
+			"${args[module_prop_name]}" \
+			"${app_name} ${args[rv_brand]}" \
+			"$version" \
+			"${app_name} ${args[rv_brand]}" \
+			"https://raw.githubusercontent.com/${GITHUB_REPOSITORY-}/update/${upj}" \
+			"$base_template"
+
+		local module_output="${app_name_l}-${rv_brand_f}-v${version_f}-${arch_f}.zip"
+		pr "Packing module ${table}"
+		cp -f "$patched_apk" "${base_template}/base.apk"
+		if [ "${args[include_stock]}" = true ]; then cp -f "$stock_apk" "${base_template}/${pkg_name}.apk"; fi
+		pushd >/dev/null "$base_template" || abort "Module template dir not found"
+		zip -"$COMPRESSION_LEVEL" -FSqr "${BUILD_DIR}/${module_output}" .
+		popd >/dev/null || :
+		pr "Built ${table} (root): '${BUILD_DIR}/${module_output}'"
+	done
+}
+
+build_rv() {
+	eval "declare -A args=${1#*=}"
+	local version pkg_name
+	local mode_arg=${args[build_mode]} version_mode=${args[version]}
+	local app_name=${args[app_name]}
+	local app_name_l=${app_name,,}
+	app_name_l=${app_name_l// /-}
+	local table=${args[table]}
+	local dl_from=${args[dl_from]}
+	local arch=${args[arch]}
+	local arch_f="${arch// /}"
+
+	local p_patcher_args=()
+	p_patcher_args+=("$(join_args "${args[excluded_patches]}" -d) $(join_args "${args[included_patches]}" -e)")
+	[ "${args[exclusive_patches]}" = true ] && p_patcher_args+=("--exclusive")
+
+	local tried_dl=()
+	for dl_p in archive apkmirror uptodown; do
+		if [ -z "${args[${dl_p}_dlurl]}" ]; then continue; fi
+		if ! get_${dl_p}_resp "${args[${dl_p}_dlurl]}" || ! pkg_name=$(get_"${dl_p}"_pkg_name); then
+			args[${dl_p}_dlurl]=""
+			epr "ERROR: Could not find ${table} in ${dl_p}"
+			continue
+		fi
+		tried_dl+=("$dl_p")
+		dl_from=$dl_p
+		break
+	done
+	if [ -z "$pkg_name" ]; then
+		epr "empty pkg name, not building ${table}."
+		return 0
+	fi
+	local get_latest_ver=false
+	if [ "$version_mode" = auto ]; then
+		if ! version=$(get_patch_last_supported_ver "$pkg_name" \
+			"${args[included_patches]}" "${args[excluded_patches]}" "${args[exclusive_patches]}" "${args[ptjs]}"); then
+			exit 1
+		elif [ -z "$version" ]; then get_latest_ver=true; fi
+	elif isoneof "$version_mode" latest beta; then
+		get_latest_ver=true
+		p_patcher_args+=("-f")
+	else
+		version=$version_mode
+		p_patcher_args+=("-f")
+	fi
+	if [ $get_latest_ver = true ]; then
+		if [ "$version_mode" = beta ]; then __AAV__="true"; else __AAV__="false"; fi
+		pkgvers=$(get_"${dl_from}"_vers)
+		version=$(get_largest_ver <<<"$pkgvers") || version=$(head -1 <<<"$pkgvers")
+	fi
+	if [ -z "$version" ]; then
+		epr "empty version, not building ${table}."
+		return 0
+	fi
+
+	build_mode_arr=(apk)
+
+	pr "Choosing version '${version}' for ${table}"
+	local version_f=${version// /}
+	version_f=${version_f#v}
+	local stock_apk="${TEMP_DIR}/${pkg_name}-${version_f}-${arch_f}.apk"
+	if [ ! -f "$stock_apk" ]; then
+		for dl_p in archive apkmirror uptodown; do
+			if [ -z "${args[${dl_p}_dlurl]}" ]; then continue; fi
+			pr "Downloading '${table}' from ${dl_p}"
+			if ! isoneof $dl_p "${tried_dl[@]}"; then get_${dl_p}_resp "${args[${dl_p}_dlurl]}"; fi
+			if ! dl_${dl_p} "${args[${dl_p}_dlurl]}" "$version" "$stock_apk" "$arch" "${args[dpi]}" "$get_latest_ver"; then
+				epr "ERROR: Could not download '${table}' from ${dl_p} with version '${version}', arch '${arch}', dpi '${args[dpi]}'"
+				continue
+			fi
+			break
+		done
+		if [ ! -f "$stock_apk" ]; then return 0; fi
+	fi
+	if ! check_sig "$stock_apk" "$pkg_name"; then
+		abort "apk signature mismatch '$stock_apk'"
+	fi
+	log "${table}: ${version}"
+
+	local patcher_args patched_apk build_mode
+	local rv_brand_f=${args[rv_brand],,}
+	rv_brand_f=${rv_brand_f// /-}
+	for build_mode in "${build_mode_arr[@]}"; do
+		patcher_args=("${p_patcher_args[@]}")
+		pr "Building '${table}' in '$build_mode' mode"
+		patched_apk="${TEMP_DIR}/${app_name_l}-${rv_brand_f}-${version_f}-${arch_f}.apk"
 		if [ "${args[riplib]}" = true ]; then
 			patcher_args+=("--rip-lib x86_64 --rip-lib x86")
 			if [ "$build_mode" = module ]; then

@@ -141,7 +141,11 @@ for table_name in $(toml_get_table_names); do
 		app_args[arch]="arm64-v8a"
 		app_args[module_prop_name]="${app_args[module_prop_name]}-arm64"
 		idx=$((idx + 1))
-		build_rv "$(declare -p app_args)" &
+		if [ "$cli_src" = "j-hc/revanced-cli" ]; then
+			build_rv "$(declare -p app_args)" &
+		else
+			build_rv_old_cli "$(declare -p app_args)" &
+		fi
 		app_args[table]="$table_name (arm-v7a)"
 		app_args[arch]="arm-v7a"
 		app_args[module_prop_name]="${app_args[module_prop_name]}-arm"
@@ -150,10 +154,18 @@ for table_name in $(toml_get_table_names); do
 			idx=$((idx - 1))
 		fi
 		idx=$((idx + 1))
-		build_rv "$(declare -p app_args)" &
+		if [ "$cli_src" = "j-hc/revanced-cli" ]; then
+			build_rv "$(declare -p app_args)" &
+		else
+			build_rv_old_cli "$(declare -p app_args)" &
+		fi
 	else
 		idx=$((idx + 1))
-		build_rv "$(declare -p app_args)" &
+		if [ "$cli_src" = "j-hc/revanced-cli" ]; then
+			build_rv "$(declare -p app_args)" &
+		else
+			build_rv_old_cli "$(declare -p app_args)" &
+		fi
 	fi
 done
 wait
