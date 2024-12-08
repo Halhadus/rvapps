@@ -63,7 +63,7 @@ jobs:
           - id: "Twitter"
           - id: "Photos"
           - id: "TikTok"
-          # - id: 'Spotify'
+          - id: 'Spotify'
           # - id: "YouTube"
           # - id: "Music"
           # - id: "Twitch"

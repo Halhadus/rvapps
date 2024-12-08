@@ -46,7 +46,7 @@ get_rv_prebuilts() {
 		set -- $src_ver
 		local src=$1 tag=$2 ver=${3-} ext
 		if [ "$tag" = "Patches" ]; then
-			if [ "$cli_ver" == "latest" ] || [ $cli_ver -ge 4.9 ]; then
+			if [ "$cli_ver" == "latest" ] || [ "$cli_ver" != "v4.6.2" ]; then
 				ext="rvp"
 			else
 				ext="jar"
@@ -406,6 +406,15 @@ get_archive_resp() {
 }
 get_archive_vers() { sed 's/^[^-]*-//;s/-\(all\|arm64-v8a\|arm-v7a\)\.apk//g' <<<"$__ARCHIVE_RESP__"; }
 get_archive_pkg_name() { echo "$__ARCHIVE_PKG_NAME__"; }
+
+# -------------------- direct --------------------
+dl_direct() {
+	local url=$1 output=$3
+	req "${url}" "$output"
+}
+get_direct_resp() {
+	__ARCHIVE_PKG_NAME__=$(sed -E 's|.*/(com\.[^/]+)-.*|\1|' <<<"$1")
+}
 # --------------------------------------------------
 
 patch_apk() {
@@ -513,10 +522,14 @@ build_rv_old_cli() {
 	version_f=${version_f#v}
 	local stock_apk="${TEMP_DIR}/${pkg_name}-${version_f}-${arch_f}.apk"
 	if [ ! -f "$stock_apk" ]; then
-		for dl_p in archive apkmirror uptodown; do
+		for dl_p in direct archive apkmirror uptodown; do
 			if [ -z "${args[${dl_p}_dlurl]}" ]; then continue; fi
 			pr "Downloading '${table}' from ${dl_p}"
-			if ! isoneof $dl_p "${tried_dl[@]}"; then get_${dl_p}_resp "${args[${dl_p}_dlurl]}"; fi
+			if [ $dl_p != "direct" ]; then
+				if ! isoneof $dl_p "${tried_dl[@]}"; then get_${dl_p}_resp "${args[${dl_p}_dlurl]}"; fi
+			else
+				get_${dl_p}_resp "${args[${dl_p}_dlurl]}";
+			fi
 			if ! dl_${dl_p} "${args[${dl_p}_dlurl]}" "$version" "$stock_apk" "$arch" "${args[dpi]}" "$get_latest_ver"; then
 				epr "ERROR: Could not download '${table}' from ${dl_p} with version '${version}', arch '${arch}', dpi '${args[dpi]}'"
 				continue

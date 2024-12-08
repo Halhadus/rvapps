@@ -144,11 +144,15 @@ uptodown-dlurl = "https://facebook.en.uptodown.com/android"
 # arch = "armeabi-v7a"
 
 [Spotify]
-enabled = false
+app_name = "Spotify"
 build-mode = "apk"
-version = "auto"
-arch = "arm64-v8a"
+version = "8.9.96.476"
+included-patches = "'Hex'"
+cli-source = "inotia00/revanced-cli"
+cli-version = "v4.6.2"
+patches-version = "v4.18.0-dev.5"
 uptodown-dlurl = "https://spotify.en.uptodown.com/android"
+direct-dlurl = "https://archive.org/download/com.spotify.music-8.9.96.476-all_202412/com.spotify.music-8.9.96.476-all.apk"
 
 [Spotify-Lite]
 enabled = true
