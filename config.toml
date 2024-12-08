@@ -61,6 +61,19 @@ apkmirror-dlurl = "https://www.apkmirror.com/apk/google-inc/youtube"
 uptodown-dlurl = "https://youtube.en.uptodown.com/android"
 # archive-dlurl = "https://archive.org/download/jhc-apks/apks/com.google.android.youtube"
 
+[Twitter-piko]
+app-name = "Twitter"
+build-mode = "apk"
+version = "latest"
+patches-source = "crimera/piko"
+integrations-source = "crimera/revanced-integrations"
+cli-source = "inotia00/revanced-cli"
+cli-version = "v4.6.2"
+rv-brand = "piko"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/x-corp/twitter"
+uptodown-dlurl = "https://twitter.en.uptodown.com/android"
+archive-dlurl = "https://archive.org/download/jhc-apks/apks/com.twitter.android"
+
 [Photos]
 app-name = "Photos"
 version = "latest"

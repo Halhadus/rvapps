@@ -59,8 +59,9 @@ jobs:
           - id: "Reddit-Extended"
           - id: "YouTube-anddea"
           - id: "Music-anddea"
-          - id: "Photos"
+          - id: "Twitter-piko"
           - id: "Twitter"
+          - id: "Photos"
           - id: "TikTok"
           # - id: 'Spotify'
           # - id: "YouTube"

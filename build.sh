@@ -141,7 +141,7 @@ for table_name in $(toml_get_table_names); do
 		app_args[arch]="arm64-v8a"
 		app_args[module_prop_name]="${app_args[module_prop_name]}-arm64"
 		idx=$((idx + 1))
-		if [ $cli_ver = "latest" ] || [ $cli_ver -ge 4.9 ]; then
+		if [ $cli_ver = "latest" ] || [ "$cli_ver" != "v4.6.2" ]; then
 			build_rv "$(declare -p app_args)" &
 		else
 			build_rv_old_cli "$(declare -p app_args)" &
@@ -154,14 +154,14 @@ for table_name in $(toml_get_table_names); do
 			idx=$((idx - 1))
 		fi
 		idx=$((idx + 1))
-		if [ $cli_ver = "latest" ] || [ $cli_ver -ge 4.9 ]; then
+		if [ $cli_ver = "latest" ] || [ "$cli_ver" != "v4.6.2" ]; then
 			build_rv "$(declare -p app_args)" &
 		else
 			build_rv_old_cli "$(declare -p app_args)" &
 		fi
 	else
 		idx=$((idx + 1))
-		if [ $cli_ver = "latest" ] || [ $cli_ver -ge 4.9 ]; then
+		if [ $cli_ver = "latest" ] || [ "$cli_ver" != "v4.6.2" ]; then
 			build_rv "$(declare -p app_args)" &
 		else
 			build_rv_old_cli "$(declare -p app_args)" &
