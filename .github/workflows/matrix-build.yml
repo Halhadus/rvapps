@@ -54,13 +54,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - id: "YouTube-Extended"
-          # - id: "Music-Extended"
-          # - id: "Reddit-Extended"
-          # - id: "YouTube-anddea"
-          # - id: "Music-anddea"
+          - id: "YouTube-Extended"
+          - id: "Music-Extended"
+          - id: "Reddit-Extended"
+          - id: "YouTube-anddea"
+          - id: "Music-anddea"
           - id: "Twitter"
-          # - id: "TikTok"
+          - id: "TikTok"
           # - id: 'Spotify'
           # - id: "YouTube"
           # - id: "Music"
