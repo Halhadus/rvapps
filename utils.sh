@@ -408,7 +408,7 @@ patch_apk() {
 	local stock_input=$1 patched_apk=$2 package_name=$3 patcher_args=$4 rv_cli_jar=$5 rv_patches_jar=$6
 	local patch_ids=()
 	for i in $(java -jar $rv_cli_jar list-patches $rv_patches_jar -f="$package_name" -u=false -d=false | grep "Index: " | sed 's/[^,:/\n]*://g');do 
-		patch_ids+=("-ei $i")
+		patch_ids+=("--ei $i")
 	done
 	local cmd="java -jar $rv_cli_jar patch $stock_input -o $patched_apk -p $rv_patches_jar "${patch_ids[*]}" $patcher_args --keystore=ks.keystore \
 --keystore-entry-password=123456789 --keystore-password=123456789 --signer=jhc --keystore-entry-alias=jhc --options=options.json"
