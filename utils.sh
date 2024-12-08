@@ -45,9 +45,13 @@ get_rv_prebuilts() {
 	for src_ver in "$cli_src CLI $cli_ver" "$integrations_src Integrations $integrations_ver" "$patches_src Patches $patches_ver"; do
 		set -- $src_ver
 		local src=$1 tag=$2 ver=${3-} ext
-		if [ "$tag" = "Patches" ] && [ "$cli_src" = "j-hc/revanced-cli" ]; then
-			ext="rvp"
-		elif [ "$tag" = "CLI" ] || [ "$tag" = "Patches" ]; then
+		if [ "$tag" = "Patches" ]; then
+			if [ "$cli_ver" == "latest" ] || [ $cli_ver -ge 4.9 ]; then
+				ext="rvp"
+			else
+				ext="jar"
+			fi
+		elif [ "$tag" = "CLI" ]; then
 			ext="jar"
 		elif [ "$tag" = "Integrations" ]; then
 			ext="apk"
@@ -93,14 +97,14 @@ get_rv_prebuilts() {
 		fi
 
 		echo -n "$file "
-		if [ "$tag" = "Patches" ] && [ "$cli_src" != "j-hc/revanced-cli" ] ; then
+		if [ "$tag" = "Patches" ]; then
 		    name="patches-${tag_name}.json"
 			file="${dir}/${name}"
 			if [ ! -f "$file" ]; then
 				resp=$(gh_req "$rv_rel" -) || return 1
 				if [ "$ver" = "dev" ]; then resp=$(jq -r '.[0]' <<<"$resp"); fi
-				url=$(jq -e -r '.assets[] | select(.name | endswith("json")) | .url' <<<"$resp") || return 1
-				gh_dl "$file" "$url" >&2 || return 1
+				url=$(jq -e -r '.assets[] | select(.name | endswith("json")) | .url' <<<"$resp") || return 0
+				gh_dl "$file" "$url" >&2 || return 0
 				echo -e "[Changelog](https://github.com/${src}/releases/tag/${tag_name})\n" >>"${cl_dir}/changelog.md"
 			fi
 			echo -n "$file "
@@ -410,7 +414,7 @@ patch_apk() {
 	for i in $(java -jar $rv_cli_jar list-patches $rv_patches_jar -f="$package_name" -u=false -d=false | grep "Index: " | sed 's/[^,:/\n]*://g');do 
 		patch_ids+=("--ei $i")
 	done
-	local cmd="java -jar $rv_cli_jar patch $stock_input -o $patched_apk -p $rv_patches_jar "${patch_ids[*]}" $patcher_args --keystore=ks.keystore \
+	local cmd="java -jar $rv_cli_jar patch $stock_input -o $patched_apk --purge -p $rv_patches_jar "${patch_ids[*]}" $patcher_args --keystore=ks.keystore \
 --keystore-entry-password=123456789 --keystore-password=123456789 --signer=jhc --keystore-entry-alias=jhc --options=options.json"
 	if [ "$OS" = Android ]; then cmd+=" --custom-aapt2-binary=${AAPT2}"; fi
 	pr "$cmd"
