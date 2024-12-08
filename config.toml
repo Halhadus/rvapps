@@ -152,7 +152,8 @@ cli-source = "inotia00/revanced-cli"
 cli-version = "v4.6.2"
 patches-version = "v4.18.0-dev.5"
 uptodown-dlurl = "https://spotify.en.uptodown.com/android"
-direct-dlurl = "https://archive.org/download/com.spotify.music-8.9.96.476-all_202412/com.spotify.music-8.9.96.476-all.apk"
+direct-dlurl = "https://archive.org/download/com.spotify.music.rv"
+arch = "all"
 
 [Spotify-Lite]
 enabled = true
