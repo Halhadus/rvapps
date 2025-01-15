@@ -175,21 +175,14 @@ config_update() {
 			elif [ "$PATCHES_VER" = "latest" ]; then
 				last_patches=$(gh_req "$rv_rel/latest" -)
 			else
+				local ver=${3-}
 				last_patches=$(gh_req "$rv_rel/tags/${ver}" -)
 			fi
-
-			if ! last_patches=$(jq -e -r '.assets[] | select(.name | endswith("jar")) | .name' <<<"$last_patches"); then
-				abort oops
-			fi
 			if [ "$last_patches" ]; then
-				if ! OP=$(grep "^Patches: ${PATCHES_SRC%%/*}/" build.md | grep "$last_patches"); then
-					sources["$PATCHES_SRC/$PATCHES_VER"]=1
-					prcfg=true
-					conf+="$t"
-					conf+=$'\n'
-				else
-					echo "$OP" >>"$TEMP_DIR"/skipped
-				fi
+				sources["$PATCHES_SRC/$PATCHES_VER"]=1
+				prcfg=true
+				conf+="$t"
+				conf+=$'\n'
 			fi
 		fi
 	done
