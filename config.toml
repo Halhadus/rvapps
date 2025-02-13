@@ -212,7 +212,7 @@ apkmonk-dlurl = "https://www.apkmonk.com/app/com.microblink.photomath/"
 
 [Instagram]
 build-mode = "apk"
-version = "latest"
+version = "368-0-0-0-91"
 apkmirror-dlurl = "https://www.apkmirror.com/apk/instagram/instagram-instagram/"
 uptodown-dlurl = "https://instagram.en.uptodown.com/android"
 #archive-dlurl = "https://archive.org/download/jhc-apks/apks/com.instagram.android"
